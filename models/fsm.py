@@ -5,7 +5,7 @@ from typing import Set, Dict, List, Tuple, Optional
 
 class FSM:
     """
-    FSM = quintuple (states, sigma, transition function, q0, F)
+    FSM = M(Q, sigma, transition function, q0, F)
     """
     def __init__(self):
         """
