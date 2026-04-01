@@ -1,11 +1,11 @@
 """
 Description: Finite-State Machine class definition.
 """
-from typing import Set, Dict, List, Tuple, Optional
+from typing import Set, Dict, List, Tuple
 
 class FSM:
     """
-    FSM = M(Q, sigma, transition function, q0, F)
+    FSM = M(Q, sigma, delta, q0, F)
     """
     def __init__(self):
         """
