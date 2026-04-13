@@ -124,7 +124,7 @@ with st.sidebar:
     st.markdown("### Q")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("+ Add State", width="stretch"):
+        if st.button("+ Add State", use_container_width=True):
             new_state = f"q{st.session_state.next_state_id}"
             import math
             num_states = len(fsm.states)
@@ -140,19 +140,19 @@ with st.sidebar:
             st.rerun()
     
     with col2:
-        if fsm.states and st.button("🗑️ Delete", width="stretch"):
+        if fsm.states and st.button("🗑️ Delete", use_container_width=True):
             st.session_state.show_delete = not getattr(st.session_state, 'show_delete', False)
 
-    if getattr(st.session_state, 'show_delete', False):
+    if getattr(st.session_state, 'show_delete', False) and fsm.states:
         state_to_delete = st.selectbox("Select state to delete:", sorted(list(fsm.states)))
         col_a, col_b = st.columns(2)
         with col_a:
-            if st.button("Confirm", width="stretch", type="primary"):
+            if st.button("Confirm", use_container_width=True, type="primary"):
                 fsm.remove_state(state_to_delete)
                 st.session_state.show_delete = False
                 st.rerun()
         with col_b:
-            if st.button("Cancel", width="stretch"):
+            if st.button("Cancel", use_container_width=True):
                 st.session_state.show_delete = False
                 st.rerun()
 
@@ -168,7 +168,7 @@ with st.sidebar:
     edited_df = st.data_editor(
         df_trans,
         num_rows="dynamic", 
-        width="stretch",
+        use_container_width=True,
         column_config={
             "from": st.column_config.SelectboxColumn("From", options=sorted(list(fsm.states))),
             "symbol": st.column_config.TextColumn("Sym"),
@@ -177,12 +177,12 @@ with st.sidebar:
         hide_index=True
     )
 
-    if st.button("Apply Changes", width="stretch", type="primary"):
+    if st.button("Apply Changes", use_container_width=True, type="primary"):
         fsm.transitions = {} 
         fsm.alphabet = set()
         for _, row in edited_df.iterrows():
             if pd.notna(row["from"]) and pd.notna(row["symbol"]) and pd.notna(row["to"]):
-                fsm.add_transition(row["from"], row["symbol"], row["to"])
+                fsm.add_transition(str(row["from"]), str(row["symbol"]), str(row["to"]))
         st.success("Updated!")
         st.rerun()
 
@@ -193,10 +193,16 @@ with st.sidebar:
     if fsm.states:
         opts = ["None"] + sorted(list(fsm.states))
         current_initial = fsm.initial_state if fsm.initial_state else "None"
-        idx = opts.index(current_initial) if current_initial in opts else 0
+        # If current_initial is no longer in opts, default to 0
+        try:
+            idx = opts.index(current_initial)
+        except ValueError:
+            idx = 0
+            
         selected_init = st.selectbox("🟢 Initial State", opts, index=idx)
-        if selected_init != current_initial:
-            fsm.set_initial_state(None if selected_init == "None" else selected_init)
+        new_init = None if selected_init == "None" else selected_init
+        if new_init != fsm.initial_state:
+            fsm.set_initial_state(new_init)
 
         acc = st.multiselect("🟣 Accept States", sorted(list(fsm.states)), default=list(fsm.accept_states))
         if set(acc) != fsm.accept_states:
@@ -215,7 +221,7 @@ if fsm.states and fsm.initial_state:
             test_str = st.text_input("Enter symbols:", value=st.session_state.test_string, placeholder="e.g. 101")
         with col2:
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("Run", width="stretch", type="primary"):
+            if st.button("Run", use_container_width=True, type="primary"):
                 st.session_state.test_string = test_str
                 trace, accepted = fsm.run(test_str)
                 st.session_state.execution_trace = trace

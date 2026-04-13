@@ -17,7 +17,8 @@ st.markdown("""
         padding: 10px;
         background: #1e1e1e;
         display: flex;
-        flex-direction: column-reverse;
+        flex-direction: column;
+        justify-content: flex-end;
         align-items: center;
         min-height: 200px;
         width: 80px;
@@ -46,13 +47,33 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- INITIALIZATION ---
-if "pda" not in st.session_state:
-    st.session_state.pda = PDA()
-    st.session_state.next_state_id = 0
+EXAMPLE_DESCRIPTIONS = {
+    "a^n b^n": "Accepts strings with an equal number of 'a's followed by 'b's (e.g., aaabbb). It pushes 'A' for every 'a' and pops for every 'b'.",
+    "Equal number of 0s and 1s": "Accepts strings with the same number of 0s and 1s in any order. It uses the stack to keep track of the 'balance' of characters.",
+    "Rejected: Palindrome Odd (fails even)": "A deterministic PDA that requires a middle 'c' (e.g., abcba). Useful for testing rejection with even strings or missing 'c'."
+}
+
+if "pda_example" not in st.session_state:
+    st.session_state.pda_example = "a^n b^n"
+    st.session_state.pda = PDA().get_example("a^n b^n")
+    st.session_state.test_string = "aaabbb"
+    st.session_state.next_state_id = len(st.session_state.pda.states)
     st.session_state.execution_trace = None
     st.session_state.execution_accepted = False
     st.session_state.trace_step = 0
-    st.session_state.test_string = ""
+
+def reset_pda(example_name=None):
+    if example_name:
+        st.session_state.pda = PDA().get_example(example_name)
+        st.session_state.pda_example = example_name
+        if example_name == "a^n b^n": st.session_state.test_string = "aaabbb"
+        elif example_name == "Equal number of 0s and 1s": st.session_state.test_string = "0011"
+        elif example_name == "Rejected: Palindrome Odd (fails even)": st.session_state.test_string = "abba"
+    else:
+        st.session_state.pda = PDA()
+    st.session_state.next_state_id = len(st.session_state.pda.states)
+    st.session_state.execution_trace = None
+    st.session_state.trace_step = 0
 
 pda = st.session_state.pda
 
@@ -60,6 +81,21 @@ pda = st.session_state.pda
 with st.sidebar:
     st.markdown("## ⚙️ PDA Control Panel")
     
+    selected_example = st.selectbox(
+        "Load Example", 
+        list(EXAMPLE_DESCRIPTIONS.keys()),
+        index=list(EXAMPLE_DESCRIPTIONS.keys()).index(st.session_state.pda_example)
+    )
+    
+    if selected_example != st.session_state.pda_example:
+        reset_pda(selected_example)
+        st.rerun()
+
+    if st.button("✨ Clear / New PDA", use_container_width=True):
+        reset_pda()
+        st.rerun()
+    
+    st.divider()
     # 1. State Management
     st.markdown("### Q (States)")
     col1, col2 = st.columns(2)
@@ -152,6 +188,7 @@ with st.sidebar:
 
 # --- MAIN CONTENT ---
 st.title("Interactive Pushdown Automata")
+st.info(f"**Current Example: {st.session_state.pda_example}**\n\n{EXAMPLE_DESCRIPTIONS[st.session_state.pda_example]}")
 
 col_canvas, col_stack = st.columns([3, 1])
 
@@ -162,6 +199,7 @@ with col_stack:
     st.markdown("### 🧱 Stack")
     # This will be populated during the Trace step
     stack_placeholder = st.empty()
+    stack_placeholder.info("Run an input string to see the stack.")
 
 # --- EXECUTION ---
 if pda.states and pda.initial_state:
@@ -177,37 +215,44 @@ if pda.states and pda.initial_state:
                 st.session_state.execution_trace = trace
                 st.session_state.execution_accepted = accepted
                 st.session_state.trace_step = 0
-        
+
         if st.session_state.execution_trace is not None:
             trace = st.session_state.execution_trace
-            
+
             if st.session_state.execution_accepted:
-                st.success(f"Accepted! Path found in {len(trace)} steps.")
+                st.success(f"Accepted! Path found in {len(trace)-1} steps.")
             else:
                 st.error("Rejected! No valid path to an accepting state.")
 
-            step = st.slider("Step Through Trace", 0, len(trace), value=st.session_state.trace_step)
-            st.session_state.trace_step = step
+            # --- STEP NAVIGATION BUTTONS ---
+            c_btn1, c_btn2 = st.columns(2)
+            with c_btn1:
+                if st.button("⬅️ Previous Step", use_container_width=True, disabled=st.session_state.trace_step <= 0):
+                    st.session_state.trace_step -= 1
+                    st.rerun()
+            with c_btn2:
+                if st.button("Next Step ➡️", use_container_width=True, disabled=st.session_state.trace_step >= len(trace)-1):
+                    st.session_state.trace_step += 1
+                    st.rerun()
+
+            # Step through trace slider
+            step = st.slider("Step Through Trace", 0, len(trace)-1 if trace else 0, value=st.session_state.trace_step)
+            if step != st.session_state.trace_step:
+                st.session_state.trace_step = step
+                st.rerun()
 
             # Display Trace Table
             if trace:
-                trace_df = pd.DataFrame(trace[:step])
+                trace_df = pd.DataFrame(trace[:step+1])
                 st.dataframe(trace_df, use_container_width=True, hide_index=True)
 
             # --- STACK VISUALIZATION LOGIC ---
-            # Reconstruct stack state at the current step
-            current_stack = [pda.initial_stack_symbol]
-            for i in range(step):
-                move = trace[i]
-                # In the run logic, we pop 1 and push N
-                if current_stack: current_stack.pop()
-                push_symbols = list(move['push']) if move['push'] != 'ε' else []
-                # Pushing 'AZ' means Z is base, A is top
-                current_stack.extend(reversed(push_symbols))
-
-            # Render Stack as HTML
-            stack_html = '<div class="stack-container">'
-            for sym in current_stack:
-                stack_html += f'<div class="stack-item">{sym}</div>'
-            stack_html += '</div><div style="text-align:center">Stack Base</div>'
-            stack_placeholder.markdown(stack_html, unsafe_allow_html=True)
+            # Get stack string from trace and reverse it for top-to-bottom rendering
+            if trace and step < len(trace):
+                stack_str = trace[step]['Stack']
+                # Render Stack as HTML
+                stack_html = '<div class="stack-container">'
+                for sym in reversed(stack_str):
+                    stack_html += f'<div class="stack-item">{sym}</div>'
+                stack_html += '</div><div style="text-align:center">Stack Base</div>'
+                stack_placeholder.markdown(stack_html, unsafe_allow_html=True)

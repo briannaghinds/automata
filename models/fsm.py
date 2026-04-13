@@ -33,9 +33,21 @@ class FSM:
         """
         if state in self.states:
             self.states.remove(state)
-            keys_to_remove = [key for key in self.transitions.keys() if key[0] == state or self.transitions[key] == state]
+            
+            # Remove outgoing transitions from this state
+            keys_to_remove = [key for key in self.transitions.keys() if key[0] == state]
             for key in keys_to_remove:
                 del self.transitions[key]
+            
+            # Remove incoming transitions to this state
+            for key in self.transitions:
+                self.transitions[key] = [t for t in self.transitions[key] if t != state]
+            
+            # Clean up empty transition lists
+            empty_keys = [k for k, v in self.transitions.items() if not v]
+            for k in empty_keys:
+                del self.transitions[k]
+
             if state in self.state_positions:
                 del self.state_positions[state]
             if self.initial_state == state:
@@ -84,8 +96,12 @@ class FSM:
         """
         Delete transitions from the transition data structure.
         """
-        if (from_state, symbol) in self.transitions:
-            del self.transitions[(from_state, symbol)]
+        key = (from_state, symbol)
+        if key in self.transitions:
+            if to_state in self.transitions[key]:
+                self.transitions[key].remove(to_state)
+            if not self.transitions[key]:
+                del self.transitions[key]
 
     def get_transitions(self) -> List[Dict]:
         """
