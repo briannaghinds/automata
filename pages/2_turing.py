@@ -5,11 +5,90 @@ from models.turing import TuringMachine
 from visuals.interactive_canvas import render_interactive_canvas
 
 # Page config
-st.set_page_config(page_title="Turing Machine Explorer", layout="wide")
+st.set_page_config(page_title="Turing Machines", layout="wide")
 
 # --- UI THEME & CSS ---
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* Background with Theme-Aware Dot Grid */
+    [data-testid="stAppViewContainer"] {
+        background-color: var(--background-color) !important;
+        background-image: radial-gradient(var(--secondary-background-color) 1px, transparent 1px) !important;
+        background-size: 24px 24px !important;
+    }
+    
+    [data-testid="stHeader"] {
+        background: rgba(0,0,0,0) !important;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: var(--secondary-background-color) !important;
+        border-right: 1px solid var(--secondary-background-color) !important;
+    }
+
+    /* Inputs & Dropdowns */
+    div[data-baseweb="select"] > div, 
+    .stTextInput>div>div>input {
+        border: 1px solid var(--secondary-background-color) !important;
+        border-radius: 8px !important;
+    }
+    
+    div[data-baseweb="popover"] li {
+        color: var(--text-color) !important;
+    }
+
+    /* Data Tables & Editor */
+    [data-testid="stDataFrame"], [data-testid="stDataEditor"] {
+        border: 1px solid var(--secondary-background-color) !important;
+        border-radius: 8px !important;
+        background-color: transparent !important;
+    }
+
+    /* Shared base */
+    [data-testid="baseButton-primary"],
+    [data-testid="baseButton-secondary"] {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: background-color 0.18s ease,
+                    box-shadow       0.18s ease,
+                    transform        0.12s ease,
+                    filter           0.18s ease !important;
+    }
+
+    /* Secondary buttons */
+    [data-testid="baseButton-secondary"] {
+        background-color: var(--background-color) !important;
+        border: 1.5px solid rgba(0,0,0,0.15) !important;
+        color: var(--text-color) !important;
+    }
+    [data-testid="baseButton-secondary"]:hover {
+        background-color: var(--secondary-background-color) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Primary buttons */
+    [data-testid="baseButton-primary"] {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+    }
+    [data-testid="baseButton-primary"]:hover {
+        filter: brightness(1.08) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Canvas wrapper */
+    #canvas-wrap {
+        border: 1px solid var(--secondary-background-color) !important;
+        background-color: var(--background-color) !important;
+    }
+
     .tape-container {
         display: flex;
         justify-content: center;
@@ -120,7 +199,7 @@ if "tm_machine" not in st.session_state:
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.title("⚙️ TM Configuration")
+    st.title("⚙️ TM Control Panel")
     
     new_example = st.selectbox(
         "Select Example", 
@@ -149,11 +228,11 @@ with st.sidebar:
     
     speed = st.slider("Simulation Speed (Delay)", 0.05, 1.0, 0.3)
     
-    if st.button("▶️ Run / ⏸️ Stop", use_container_width=True):
+    if st.button("Run/Stop", use_container_width=True):
         st.session_state.tm_running = not st.session_state.tm_running
 
     st.divider()
-    st.markdown("### 📘 Formal Definition")
+    st.markdown("### TM Formal Definition")
     defn = st.session_state.tm_machine.get_definition()
     st.latex(r"M = (Q, \Sigma, \Gamma, \delta, q_0, B, F)")
     for key, val in defn.items():
@@ -178,7 +257,7 @@ for i in tape_range:
 tape_html += '</div>'
 
 st.markdown(tape_html, unsafe_allow_html=True)
-st.markdown(f'<div class="head-pointer">▲</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="head-pointer">^</div>', unsafe_allow_html=True)
 
 # Status Section
 col_status, col_msg = st.columns([1, 2])
@@ -201,15 +280,15 @@ with col_msg:
     elif st.session_state.tm_reason:
         st.warning(f"### ⚠️ HALTED\n{st.session_state.tm_reason}")
     else:
-        st.info("### 🔄 COMPUTING\nThe machine is currently active or waiting for input.")
+        st.info("### ~COMPUTING\nThe machine is currently active or waiting for input.")
 
 # Operations Log and Controls
 st.divider()
 c1, c2 = st.columns([1, 2])
 
 with c1:
-    st.markdown("### 🕹️ Controls")
-    if st.button("Single Step ➡️", use_container_width=True):
+    st.markdown("### Flow Controls")
+    if st.button("Single Step ->", use_container_width=True):
         current_state = st.session_state.tm_state
         current_sym = st.session_state.tm_tape.get(st.session_state.tm_head, "B")
         
@@ -241,7 +320,7 @@ with c1:
         st.rerun()
 
 with c2:
-    st.markdown("### 📋 Operation Log")
+    st.markdown("### TM Log")
     if st.session_state.tm_log:
         log_df = pd.DataFrame(st.session_state.tm_log)
         st.dataframe(log_df, use_container_width=True, hide_index=True)
@@ -250,7 +329,7 @@ with c2:
 
 # State Diagram at the bottom
 st.divider()
-st.markdown("### 🗺️ State Diagram")
+st.markdown("### TM State Diagram")
 render_interactive_canvas(st.session_state.tm_machine)
 
 # Auto-run logic

@@ -96,7 +96,7 @@ class PDA:
         flat_list = []
         for (f_state, input_char, stack_top), targets in self.transitions.items():
             for t_state, push_symbols in targets:
-                symbol = f"{input_char if input_char else 'ε'},{stack_top}→{''.join(push_symbols) if push_symbols else 'ε'}"
+                symbol = f"{input_char if input_char else 'λ'},{stack_top},{''.join(push_symbols) if push_symbols else 'λ'}"
                 flat_list.append({"from": f_state, "to": t_state, "symbol": symbol})
         return flat_list
 
@@ -148,9 +148,9 @@ class PDA:
                         new_trace = trace + [{
                             "Step": len(trace) + 1,
                             "State": state,
-                            "Input": "ε",
+                            "Input": "λ",
                             "Pop": top,
-                            "Push": "".join(push_symbols) if push_symbols else "ε",
+                            "Push": "".join(push_symbols) if push_symbols else "λ",
                             "Next": next_state,
                             "Stack": "".join(pda_stack)
                         }]

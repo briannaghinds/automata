@@ -5,12 +5,90 @@ from models.pda import PDA  # Ensure this is your updated PDA class
 from visuals.interactive_canvas import render_interactive_canvas
 
 # Page config
-st.set_page_config(page_title="PDA Flow", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Pushdown Automata", layout="wide", initial_sidebar_state="expanded")
 
 # --- UI THEME & CSS (Same as yours, keeping it clean) ---
 st.markdown("""
 <style>
-    /* ... existing CSS ... */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* Background with Theme-Aware Dot Grid */
+    [data-testid="stAppViewContainer"] {
+        background-color: var(--background-color) !important;
+        background-image: radial-gradient(var(--secondary-background-color) 1px, transparent 1px) !important;
+        background-size: 24px 24px !important;
+    }
+    
+    [data-testid="stHeader"] {
+        background: rgba(0,0,0,0) !important;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: var(--secondary-background-color) !important;
+        border-right: 1px solid var(--secondary-background-color) !important;
+    }
+
+    /* Inputs & Dropdowns */
+    div[data-baseweb="select"] > div, 
+    .stTextInput>div>div>input {
+        border: 1px solid var(--secondary-background-color) !important;
+        border-radius: 8px !important;
+    }
+    
+    div[data-baseweb="popover"] li {
+        color: var(--text-color) !important;
+    }
+
+    /* Data Tables & Editor */
+    [data-testid="stDataFrame"], [data-testid="stDataEditor"] {
+        border: 1px solid var(--secondary-background-color) !important;
+        border-radius: 8px !important;
+        background-color: transparent !important;
+    }
+
+    /* Shared base */
+    [data-testid="baseButton-primary"],
+    [data-testid="baseButton-secondary"] {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: background-color 0.18s ease,
+                    box-shadow       0.18s ease,
+                    transform        0.12s ease,
+                    filter           0.18s ease !important;
+    }
+
+    /* Secondary buttons */
+    [data-testid="baseButton-secondary"] {
+        background-color: var(--background-color) !important;
+        border: 1.5px solid rgba(0,0,0,0.15) !important;
+        color: var(--text-color) !important;
+    }
+    [data-testid="baseButton-secondary"]:hover {
+        background-color: var(--secondary-background-color) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Primary buttons */
+    [data-testid="baseButton-primary"] {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+    }
+    [data-testid="baseButton-primary"]:hover {
+        filter: brightness(1.08) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Canvas wrapper */
+    #canvas-wrap {
+        border: 1px solid var(--secondary-background-color) !important;
+        background-color: var(--background-color) !important;
+    }
+
     .stack-container {
         border: 2px solid #4a4a4a;
         border-radius: 8px;
@@ -91,7 +169,7 @@ with st.sidebar:
         reset_pda(selected_example)
         st.rerun()
 
-    if st.button("✨ Clear / New PDA", use_container_width=True):
+    if st.button("Clear/New PDA", use_container_width=True):
         reset_pda()
         st.rerun()
     
@@ -111,7 +189,7 @@ with st.sidebar:
             st.rerun()
     
     with col2:
-        if pda.states and st.button("🗑️ Delete", use_container_width=True):
+        if pda.states and st.button("x Delete", use_container_width=True):
             st.session_state.show_delete = not getattr(st.session_state, 'show_delete', False)
 
     if getattr(st.session_state, 'show_delete', False):
@@ -125,7 +203,7 @@ with st.sidebar:
 
     # 2. Transition Table (Updated for PDA)
     st.markdown("### δ (Transitions)")
-    st.caption("Use empty for ε (Epsilon)")
+    st.caption("Use empty for λ (lambda)")
     
     # Flatten transitions for data_editor
     current_transitions = []
@@ -196,14 +274,14 @@ with col_canvas:
     render_interactive_canvas(pda)
 
 with col_stack:
-    st.markdown("### 🧱 Stack")
+    st.markdown("### Stack")
     # This will be populated during the Trace step
     stack_placeholder = st.empty()
     stack_placeholder.info("Run an input string to see the stack.")
 
 # --- EXECUTION ---
 if pda.states and pda.initial_state:
-    with st.expander("▶️ Run & Trace Input", expanded=True):
+    with st.expander("Run & Trace Input", expanded=True):
         c1, c2 = st.columns([3, 1])
         with c1:
             test_str = st.text_input("Input String:", value=st.session_state.test_string, placeholder="e.g. 0011")
@@ -227,11 +305,11 @@ if pda.states and pda.initial_state:
             # --- STEP NAVIGATION BUTTONS ---
             c_btn1, c_btn2 = st.columns(2)
             with c_btn1:
-                if st.button("⬅️ Previous Step", use_container_width=True, disabled=st.session_state.trace_step <= 0):
+                if st.button("<- Previous Step", use_container_width=True, disabled=st.session_state.trace_step <= 0):
                     st.session_state.trace_step -= 1
                     st.rerun()
             with c_btn2:
-                if st.button("Next Step ➡️", use_container_width=True, disabled=st.session_state.trace_step >= len(trace)-1):
+                if st.button("Next Step ->", use_container_width=True, disabled=st.session_state.trace_step >= len(trace)-1):
                     st.session_state.trace_step += 1
                     st.rerun()
 

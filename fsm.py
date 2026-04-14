@@ -4,7 +4,7 @@ from models.fsm import FSM
 from visuals.interactive_canvas import render_interactive_canvas
 
 # Page config
-st.set_page_config(page_title="Automata Flow", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Finite State Machines", layout="wide", initial_sidebar_state="expanded")
 
 # --- UI THEME & CSS ---
 st.markdown("""
@@ -118,7 +118,7 @@ fsm = st.session_state.fsm
 
 # --- SIDEBAR TOOLS ---
 with st.sidebar:
-    st.markdown("## ⚙️ Control Panel")
+    st.markdown("## ⚙️ FSM Control Panel")
     
     # 1. State Management
     st.markdown("### Q")
@@ -140,7 +140,7 @@ with st.sidebar:
             st.rerun()
     
     with col2:
-        if fsm.states and st.button("🗑️ Delete", use_container_width=True):
+        if fsm.states and st.button("x Delete", use_container_width=True):
             st.session_state.show_delete = not getattr(st.session_state, 'show_delete', False)
 
     if getattr(st.session_state, 'show_delete', False) and fsm.states:
