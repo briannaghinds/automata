@@ -7,7 +7,7 @@ from visuals.interactive_canvas import render_interactive_canvas
 # Page config
 st.set_page_config(page_title="Pushdown Automata", layout="wide", initial_sidebar_state="expanded")
 
-# --- UI THEME & CSS (Same as yours, keeping it clean) ---
+# --- UI THEME & CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -289,35 +289,40 @@ if pda.states and pda.initial_state:
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("Execute", use_container_width=True, type="primary"):
                 st.session_state.test_string = test_str
-                trace, accepted = pda.run(test_str)
+                trace, accepted, reason = pda.run(test_str)
                 st.session_state.execution_trace = trace
                 st.session_state.execution_accepted = accepted
+                st.session_state.execution_reason = reason
                 st.session_state.trace_step = 0
 
         if st.session_state.execution_trace is not None:
             trace = st.session_state.execution_trace
+            reason = getattr(st.session_state, 'execution_reason', "")
 
             if st.session_state.execution_accepted:
                 st.success(f"Accepted! Path found in {len(trace)-1} steps.")
             else:
-                st.error("Rejected! No valid path to an accepting state.")
+                st.error(f"{reason}")
 
-            # --- STEP NAVIGATION BUTTONS ---
-            c_btn1, c_btn2 = st.columns(2)
-            with c_btn1:
-                if st.button("<- Previous Step", use_container_width=True, disabled=st.session_state.trace_step <= 0):
-                    st.session_state.trace_step -= 1
-                    st.rerun()
-            with c_btn2:
-                if st.button("Next Step ->", use_container_width=True, disabled=st.session_state.trace_step >= len(trace)-1):
-                    st.session_state.trace_step += 1
-                    st.rerun()
+            if len(trace) > 1:
+                # --- STEP NAVIGATION BUTTONS ---
+                c_btn1, c_btn2 = st.columns(2)
+                with c_btn1:
+                    if st.button("<- Previous Step", use_container_width=True, disabled=st.session_state.trace_step <= 0):
+                        st.session_state.trace_step -= 1
+                        st.rerun()
+                with c_btn2:
+                    if st.button("Next Step ->", use_container_width=True, disabled=st.session_state.trace_step >= len(trace)-1):
+                        st.session_state.trace_step += 1
+                        st.rerun()
 
-            # Step through trace slider
-            step = st.slider("Step Through Trace", 0, len(trace)-1 if trace else 0, value=st.session_state.trace_step)
-            if step != st.session_state.trace_step:
-                st.session_state.trace_step = step
-                st.rerun()
+                # Step through trace slider
+                step = st.slider("Step Through Trace", 0, len(trace)-1, value=st.session_state.trace_step)
+                if step != st.session_state.trace_step:
+                    st.session_state.trace_step = step
+                    st.rerun()
+            else:
+                step = 0
 
             # Display Trace Table
             if trace:

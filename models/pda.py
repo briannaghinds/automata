@@ -100,30 +100,36 @@ class PDA:
                 flat_list.append({"from": f_state, "to": t_state, "symbol": symbol})
         return flat_list
 
-    def run(self, input_string: str) -> Tuple[List[dict], bool]:
+    def run(self, input_string: str) -> Tuple[List[dict], bool, str]:
         """
         Explores the PDA using a Depth-First Search to handle non-determinism.
-        Returns (trace, accepted).
+        Returns (trace, accepted, reason).
         """
-        if not self.initial_state or not self.initial_stack_symbol:
-            return ([], False)
+        if not self.initial_state:
+            return ([], False, "Initial state not set.")
+        if not self.initial_stack_symbol:
+            return ([], False, "Initial stack symbol not set.")
 
         # (current_index, current_state, current_stack, path_taken)
-        # Using a list for the stack and path for DFS
         queue = [(0, self.initial_state, [self.initial_stack_symbol], [])]
-        visited = set() # To prevent infinite epsilon loops
+        visited = set() 
+        longest_trace = []
+        failure_reasons = set()
 
         while queue:
             idx, state, pda_stack, trace = queue.pop()
             
-            # State identifier for cycle detection (index, state, stack_tuple)
+            # State identifier for cycle detection
             config = (idx, state, tuple(pda_stack))
             if config in visited: continue
             visited.add(config)
 
-            # Acceptance condition: Input consumed AND state is an accept state
+            # Update longest trace for visualization on failure
+            if len(trace) > len(longest_trace):
+                longest_trace = trace
+
+            # Acceptance condition
             if idx == len(input_string) and state in self.accept_states:
-                # Add final state to trace for clarity
                 final_trace = trace + [{
                     "Step": len(trace) + 1,
                     "State": state,
@@ -133,16 +139,19 @@ class PDA:
                     "Next": "-",
                     "Stack": "".join(pda_stack)
                 }]
-                return (final_trace, True)
+                return (final_trace, True, "Accepted")
 
-            # Possible input character
+            # Possible transitions
             char = input_string[idx] if idx < len(input_string) else None
             top = pda_stack[-1] if pda_stack else None
 
-            # 1. Epsilon transitions (always possible if defined, regardless of input)
+            branch_found = False
+
+            # 1. Epsilon transitions
             if top:
                 epsilon_key = (state, '', top)
                 if epsilon_key in self.transitions:
+                    branch_found = True
                     for next_state, push_symbols in self.transitions[epsilon_key]:
                         new_stack = pda_stack[:-1] + list(reversed(push_symbols))
                         new_trace = trace + [{
@@ -160,6 +169,7 @@ class PDA:
             if char is not None and top:
                 input_key = (state, char, top)
                 if input_key in self.transitions:
+                    branch_found = True
                     for next_state, push_symbols in self.transitions[input_key]:
                         new_stack = pda_stack[:-1] + list(reversed(push_symbols))
                         new_trace = trace + [{
@@ -173,7 +183,18 @@ class PDA:
                         }]
                         queue.append((idx + 1, next_state, new_stack, new_trace))
 
-        return ([], False)
+            if not branch_found:
+                if idx < len(input_string):
+                    if not top:
+                        failure_reasons.add(f"Stack empty while input '{char}' remains.")
+                    else:
+                        failure_reasons.add(f"No transition for ({state}, {char}, {top}).")
+                else:
+                    if state not in self.accept_states:
+                        failure_reasons.add(f"Input consumed but state '{state}' is not an accepting state.")
+
+        reason = "Rejected: " + ("; ".join(list(failure_reasons)[:2]) if failure_reasons else "No valid path found.")
+        return (longest_trace, False, reason)
     
     def get_example(self, name: str) -> 'PDA':
         pda = PDA()
