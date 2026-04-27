@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import math
-from models.pda import PDA  # Ensure this is your updated PDA class
+from models.pda import PDA 
 from visuals.interactive_canvas import render_interactive_canvas
 
 # Page config
