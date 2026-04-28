@@ -4,7 +4,7 @@ import pandas as pd
 from models.turing import TuringMachine
 from visuals.interactive_canvas import render_interactive_canvas
 
-# Page config
+# page config
 st.set_page_config(page_title="Turing Machines", layout="wide")
 
 # --- UI THEME & CSS ---
@@ -168,7 +168,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- INITIALIZATION ---
+# TM example initialization
 EXAMPLE_DESCRIPTIONS = {
     "Unary Addition (x+y)": "Adds two unary numbers (represented by 1s) separated by a +. It works by replacing the + with a 1 and then removing the last 1 from the end.",
     "Binary Increment": "Increments a binary number by 1. It scans to the end, then moves backwards, flipping 1s to 0s until it finds a 0 or the beginning of the tape, which it changes to 1.",
@@ -185,7 +185,8 @@ def reset_tm():
     example_name = st.session_state.tm_example
     st.session_state.tm_machine = TuringMachine().get_example(example_name)
     input_str = st.session_state.tm_input
-    # Initialize tape with some padding
+    
+    # initialize R/W tape with padding
     st.session_state.tm_tape = {i: input_str[i] if i < len(input_str) else "B" for i in range(max(20, len(input_str) + 5))}
     st.session_state.tm_modified = set()
     st.session_state.tm_head = 0
@@ -197,7 +198,7 @@ def reset_tm():
 if "tm_machine" not in st.session_state:
     reset_tm()
 
-# --- SIDEBAR ---
+# sidebar
 with st.sidebar:
     st.title("⚙️ TM Control Panel")
     
@@ -238,11 +239,11 @@ with st.sidebar:
     for key, val in defn.items():
         st.markdown(f"**{key}:** `{val}`")
 
-# --- MAIN CONTENT ---
+# main
 st.title(f"Turing Machine: {st.session_state.tm_example}")
 st.info(EXAMPLE_DESCRIPTIONS[st.session_state.tm_example])
 
-# Tape Visualization
+# visualization of the R/W tape
 tape_range = range(max(0, st.session_state.tm_head - 7), st.session_state.tm_head + 8)
 tape_html = '<div class="tape-container">'
 for i in tape_range:
@@ -259,7 +260,7 @@ tape_html += '</div>'
 st.markdown(tape_html, unsafe_allow_html=True)
 st.markdown(f'<div class="head-pointer">^</div>', unsafe_allow_html=True)
 
-# Status Section
+# status of the state
 col_status, col_msg = st.columns([1, 2])
 with col_status:
     cur_sym = st.session_state.tm_tape.get(st.session_state.tm_head, "B")
@@ -282,7 +283,7 @@ with col_msg:
     else:
         st.info("### ~COMPUTING\nThe machine is currently active or waiting for input.")
 
-# Operations Log and Controls
+# operations Log and Controls
 st.divider()
 c1, c2 = st.columns([1, 2])
 
@@ -304,7 +305,7 @@ with c1:
                 "Next": next_state
             })
             
-            # Track modification
+            # track the modification
             if write_sym != current_sym:
                 st.session_state.tm_modified.add(st.session_state.tm_head)
                 
@@ -327,12 +328,12 @@ with c2:
     else:
         st.caption("No operations yet. Start the machine to see the log.")
 
-# State Diagram at the bottom
+# state Diagram at the bottom
 st.divider()
 st.markdown("### TM State Diagram")
 render_interactive_canvas(st.session_state.tm_machine)
 
-# Auto-run logic
+# auto-run the logic
 if st.session_state.tm_running:
     if st.session_state.tm_state not in st.session_state.tm_machine.accept_states and \
        st.session_state.tm_state not in st.session_state.tm_machine.reject_states:
@@ -353,7 +354,7 @@ if st.session_state.tm_running:
                 "Next": next_state
             })
             
-            # Track modification
+            # track modification
             if write_sym != current_sym:
                 st.session_state.tm_modified.add(st.session_state.tm_head)
                 

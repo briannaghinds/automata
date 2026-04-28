@@ -3,7 +3,7 @@ import pandas as pd
 from models.fsm import FSM
 from visuals.interactive_canvas import render_interactive_canvas
 
-# Page config
+# page config
 st.set_page_config(page_title="Finite State Machines", layout="wide", initial_sidebar_state="expanded")
 
 # --- UI THEME & CSS ---
@@ -120,7 +120,7 @@ fsm = st.session_state.fsm
 with st.sidebar:
     st.markdown("## ⚙️ FSM Control Panel")
     
-    # 1. State Management
+    # state management
     st.markdown("### Q")
     col1, col2 = st.columns(2)
     with col1:
@@ -131,7 +131,8 @@ with st.sidebar:
             angle = (2 * math.pi * num_states) / max(8, num_states + 1)
             x = 400 + 200 * math.cos(angle)
             y = 300 + 200 * math.sin(angle)
-            # Round to grid
+
+            # round x and y
             x = round(x / 24) * 24
             y = round(y / 24) * 24
             fsm.add_state(new_state)
@@ -158,7 +159,7 @@ with st.sidebar:
 
     st.divider()
 
-    # 2. Transition Table
+    # define transition table
     st.markdown("### -> Transitions")
     current_transitions = fsm.get_transitions()
     df_trans = pd.DataFrame(current_transitions)
@@ -188,12 +189,11 @@ with st.sidebar:
 
     st.divider()
 
-    # 3. Configuration
+    # configuration of diagram
     st.markdown("### Config")
     if fsm.states:
         opts = ["None"] + sorted(list(fsm.states))
         current_initial = fsm.initial_state if fsm.initial_state else "None"
-        # If current_initial is no longer in opts, default to 0
         try:
             idx = opts.index(current_initial)
         except ValueError:

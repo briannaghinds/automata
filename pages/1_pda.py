@@ -4,7 +4,7 @@ import math
 from models.pda import PDA 
 from visuals.interactive_canvas import render_interactive_canvas
 
-# Page config
+# page config
 st.set_page_config(page_title="Pushdown Automata", layout="wide", initial_sidebar_state="expanded")
 
 # --- UI THEME & CSS ---
@@ -124,7 +124,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- INITIALIZATION ---
+# build PDA examples
 EXAMPLE_DESCRIPTIONS = {
     "a^n b^n": "Accepts strings with an equal number of 'a's followed by 'b's (e.g., aaabbb). It pushes 'A' for every 'a' and pops for every 'b'.",
     "Equal number of 0s and 1s": "Accepts strings with the same number of 0s and 1s in any order. It uses the stack to keep track of the 'balance' of characters.",
@@ -155,7 +155,7 @@ def reset_pda(example_name=None):
 
 pda = st.session_state.pda
 
-# --- SIDEBAR TOOLS ---
+# sidebar
 with st.sidebar:
     st.markdown("## ⚙️ PDA Control Panel")
     
@@ -174,7 +174,8 @@ with st.sidebar:
         st.rerun()
     
     st.divider()
-    # 1. State Management
+
+    # state manager
     st.markdown("### Q (States)")
     col1, col2 = st.columns(2)
     with col1:
@@ -201,7 +202,7 @@ with st.sidebar:
 
     st.divider()
 
-    # 2. Transition Table (Updated for PDA)
+    # build PDA transition table
     st.markdown("### δ (Transitions)")
     st.caption("Use empty for λ (lambda)")
     
@@ -239,7 +240,7 @@ with st.sidebar:
         pda.transitions = {}
         for _, row in edited_df.iterrows():
             if pd.notna(row["From"]) and pd.notna(row["Pop"]) and pd.notna(row["To"]):
-                # Convert push string to list of characters
+                # convert the push string to list of characters
                 push_list = list(str(row["Push"])) if pd.notna(row["Push"]) else []
                 pda.add_transition(
                     row["From"], 
@@ -253,7 +254,7 @@ with st.sidebar:
 
     st.divider()
 
-    # 3. Configuration
+    # PDA configuration
     st.markdown("### Config")
     if pda.states:
         init_s = st.selectbox("🟢 Initial State", sorted(list(pda.states)), 
@@ -264,7 +265,7 @@ with st.sidebar:
         acc = st.multiselect("🟣 Accept States", sorted(list(pda.states)), default=list(pda.accept_states))
         pda.accept_states = set(acc)
 
-# --- MAIN CONTENT ---
+# main
 st.title("Interactive Pushdown Automata")
 st.info(f"**Current Example: {st.session_state.pda_example}**\n\n{EXAMPLE_DESCRIPTIONS[st.session_state.pda_example]}")
 
@@ -275,11 +276,10 @@ with col_canvas:
 
 with col_stack:
     st.markdown("### Stack")
-    # This will be populated during the Trace step
     stack_placeholder = st.empty()
     stack_placeholder.info("Run an input string to see the stack.")
 
-# --- EXECUTION ---
+# PDA execution
 if pda.states and pda.initial_state:
     with st.expander("Run & Trace Input", expanded=True):
         c1, c2 = st.columns([3, 1])
@@ -305,7 +305,7 @@ if pda.states and pda.initial_state:
                 st.error(f"{reason}")
 
             if len(trace) > 1:
-                # --- STEP NAVIGATION BUTTONS ---
+                # step buttons
                 c_btn1, c_btn2 = st.columns(2)
                 with c_btn1:
                     if st.button("<- Previous Step", use_container_width=True, disabled=st.session_state.trace_step <= 0):
@@ -316,7 +316,7 @@ if pda.states and pda.initial_state:
                         st.session_state.trace_step += 1
                         st.rerun()
 
-                # Step through trace slider
+                # step through trace slider
                 step = st.slider("Step Through Trace", 0, len(trace)-1, value=st.session_state.trace_step)
                 if step != st.session_state.trace_step:
                     st.session_state.trace_step = step
@@ -324,16 +324,14 @@ if pda.states and pda.initial_state:
             else:
                 step = 0
 
-            # Display Trace Table
+            # show trace table
             if trace:
                 trace_df = pd.DataFrame(trace[:step+1])
                 st.dataframe(trace_df, use_container_width=True, hide_index=True)
 
-            # --- STACK VISUALIZATION LOGIC ---
-            # Get stack string from trace and reverse it for top-to-bottom rendering
+            # get the stack string and reverse it for top-to-bottom rendering
             if trace and step < len(trace):
                 stack_str = trace[step]['Stack']
-                # Render Stack as HTML
                 stack_html = '<div class="stack-container">'
                 for sym in reversed(stack_str):
                     stack_html += f'<div class="stack-item">{sym}</div>'

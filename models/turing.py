@@ -115,12 +115,12 @@ class TuringMachine:
             tm.add_state("q_acc", is_accept=True)
             tm.add_state("q_rej", is_reject=True)
             
-            # Read first
+            # read first
             tm.add_transition("q0", "a", "qa", "B", "R")
             tm.add_transition("q0", "b", "qb", "B", "R")
             tm.add_transition("q0", "B", "q_acc", "B", "R")
             
-            # Scan right
+            # scan right
             tm.add_transition("qa", "a", "qa", "a", "R")
             tm.add_transition("qa", "b", "qa", "b", "R")
             tm.add_transition("qa", "B", "qa_last", "B", "L")
@@ -129,7 +129,7 @@ class TuringMachine:
             tm.add_transition("qb", "b", "qb", "b", "R")
             tm.add_transition("qb", "B", "qb_last", "B", "L")
             
-            # Check last
+            # check last
             tm.add_transition("qa_last", "a", "q_back", "B", "L")
             tm.add_transition("qa_last", "b", "q_rej", "b", "S") # Mismatch -> Reject
             tm.add_transition("qa_last", "B", "q_acc", "B", "R")
@@ -138,7 +138,7 @@ class TuringMachine:
             tm.add_transition("qb_last", "a", "q_rej", "a", "S") # Mismatch -> Reject
             tm.add_transition("qb_last", "B", "q_acc", "B", "R")
             
-            # Back to start
+            # back to start
             tm.add_transition("q_back", "a", "q_back", "a", "L")
             tm.add_transition("q_back", "b", "q_back", "b", "L")
             tm.add_transition("q_back", "B", "q0", "B", "R")

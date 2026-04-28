@@ -9,9 +9,8 @@ class PDA:
     - delta: transitions (state, char, stack_top) -> (new_state, push_symbols)
     """
     def __init__(self):
-        # ADDING 2 FROM FSM -> PDA 
-        # Key: (from_state, input_symbol, stack_top) 
-        # Value: List of (to_state, symbols_to_push)
+        # key: (from_state, input_symbol, stack_top) 
+        # value: List of (to_state, symbols_to_push)
         self.states: Set[str] = set()
         self.alphabet: Set[str] = set()
         self.stack_symbols: Set[str] = set()
@@ -38,7 +37,7 @@ class PDA:
             if state in self.state_positions:
                 del self.state_positions[state]
             
-            # Remove transitions from or to this state
+            # remove transitions from or to this state
             keys_to_delete = [k for k in self.transitions if k[0] == state]
             for k in keys_to_delete:
                 del self.transitions[k]
@@ -73,7 +72,7 @@ class PDA:
             if key not in self.transitions:
                 self.transitions[key] = []
             
-            # Prevent duplicates
+            # prevents duplicates
             if (to_state, push_symbols) not in self.transitions[key]:
                 self.transitions[key].append((to_state, push_symbols))
             
@@ -119,16 +118,16 @@ class PDA:
         while queue:
             idx, state, pda_stack, trace = queue.pop()
             
-            # State identifier for cycle detection
+            # state identifier for cycle detection
             config = (idx, state, tuple(pda_stack))
             if config in visited: continue
             visited.add(config)
 
-            # Update longest trace for visualization on failure
+            # update longest trace for visualization on failure
             if len(trace) > len(longest_trace):
                 longest_trace = trace
 
-            # Acceptance condition
+            # accept condition
             if idx == len(input_string) and state in self.accept_states:
                 final_trace = trace + [{
                     "Step": len(trace) + 1,
@@ -141,13 +140,13 @@ class PDA:
                 }]
                 return (final_trace, True, "Accepted")
 
-            # Possible transitions
+            # look at possible positions
             char = input_string[idx] if idx < len(input_string) else None
             top = pda_stack[-1] if pda_stack else None
 
             branch_found = False
 
-            # 1. Epsilon transitions
+            # look at lambda transitions
             if top:
                 epsilon_key = (state, '', top)
                 if epsilon_key in self.transitions:
@@ -165,7 +164,7 @@ class PDA:
                         }]
                         queue.append((idx, next_state, new_stack, new_trace))
 
-            # 2. Input-consuming transitions
+            # look at input consuming transitions
             if char is not None and top:
                 input_key = (state, char, top)
                 if input_key in self.transitions:
@@ -207,25 +206,25 @@ class PDA:
             pda.set_state_position("q0", 300, 300)
             pda.set_state_position("q1", 500, 300)
             
-            # Initial transition to q1 for empty string or to start processing
+            # initial transition to q1 for empty string or to start processing
             pda.add_transition("q0", "", "Z", "q1", ["Z"])
             
-            # If we see 0 and Z on top, push 0
+            # if we see 0 and Z on top, push 0
             pda.add_transition("q1", "0", "Z", "q1", ["0", "Z"])
-            # If we see 1 and Z on top, push 1
+            # if we see 1 and Z on top, push 1
             pda.add_transition("q1", "1", "Z", "q1", ["1", "Z"])
             
-            # Matching
+            # matching
             pda.add_transition("q1", "0", "0", "q1", ["0", "0"])
             pda.add_transition("q1", "1", "1", "q1", ["1", "1"])
             pda.add_transition("q1", "0", "1", "q1", [])
             pda.add_transition("q1", "1", "0", "q1", [])
             
         elif name == "a^n b^n":
-            pda.add_state("q0") # Start
-            pda.add_state("q1") # Pushing a's
-            pda.add_state("q2") # Popping a's with b's
-            pda.add_state("q3") # Accept
+            pda.add_state("q0") # start
+            pda.add_state("q1") # pushing a's
+            pda.add_state("q2") # popping a's with b's
+            pda.add_state("q3") # accept
             pda.set_initial_state("q0", "Z")
             pda.add_accept_state("q3")
             
@@ -235,7 +234,7 @@ class PDA:
             pda.set_state_position("q3", 800, 300)
             
             pda.add_transition("q0", "a", "Z", "q1", ["A", "Z"])
-            pda.add_transition("q0", "", "Z", "q3", ["Z"]) # Empty string
+            pda.add_transition("q0", "", "Z", "q3", ["Z"]) # empty string
             
             pda.add_transition("q1", "a", "A", "q1", ["A", "A"])
             pda.add_transition("q1", "b", "A", "q2", [])
@@ -244,8 +243,8 @@ class PDA:
             pda.add_transition("q2", "", "Z", "q3", ["Z"])
             
         elif name == "Rejected: Palindrome Odd (fails even)":
-            # This is a deterministic PDA that only accepts odd length palindromes with a middle marker 'c'
-            # We use it as a "rejected" example for an even input or wrong markers
+            # DPDA that only accepts odd length palindromes with a middle marker 'c'
+            # used as a "rejected" example for an even input or wrong markers
             pda.add_state("q0")
             pda.add_state("q1")
             pda.add_state("q2")
@@ -256,7 +255,7 @@ class PDA:
             pda.set_state_position("q1", 500, 300)
             pda.set_state_position("q2", 700, 300)
             
-            # q0: Push symbols before 'c'
+            # q0: push symbols before 'c'
             pda.add_transition("q0", "a", "Z", "q0", ["A", "Z"])
             pda.add_transition("q0", "b", "Z", "q0", ["B", "Z"])
             pda.add_transition("q0", "a", "A", "q0", ["A", "A"])
@@ -264,12 +263,12 @@ class PDA:
             pda.add_transition("q0", "b", "A", "q0", ["B", "A"])
             pda.add_transition("q0", "b", "B", "q0", ["B", "B"])
             
-            # Middle marker 'c'
+            # middle marker 'c'
             pda.add_transition("q0", "c", "A", "q1", ["A"])
             pda.add_transition("q0", "c", "B", "q1", ["B"])
             pda.add_transition("q0", "c", "Z", "q1", ["Z"])
             
-            # q1: Match and pop
+            # q1: match and pop
             pda.add_transition("q1", "a", "A", "q1", [])
             pda.add_transition("q1", "b", "B", "q1", [])
             pda.add_transition("q1", "", "Z", "q2", ["Z"])
